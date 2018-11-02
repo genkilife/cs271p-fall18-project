@@ -14,7 +14,7 @@
 
 from AI import AI
 from Action import Action
-
+import random
 
 class MyAI(AI):
     def __init__(self, rowDimension, colDimension, totalMines, startX, startY):
@@ -98,7 +98,7 @@ class MyAI(AI):
                     curCoveredTiles = self.countCoveredTiles(i, j)
                     curFlaggedTiles = self.countFlaggedTiles(i, j)
                     if curMines == curFlaggedTiles and curCoveredTiles > 0:
-                        print("position of tryMove: ", i, j)
+                        # print("position of tryMove: ", i, j)
                         for ni, nj in self.dirs:
                             if self._isInBound(i+ni, j+nj) and self.tileInfo[self.rowTotal-1-j-nj][i+ni] == -1:
                                 self.colX, self.rowY = i+ni, j+nj
@@ -108,8 +108,8 @@ class MyAI(AI):
 
     def getAction(self, number: int) -> "Action Object":
         self.updateTileInfo(number, self.colX, self.rowY)
-        for ii in range(self.rowTotal):
-            print(self.tileInfo[ii])
+        # for ii in range(self.rowTotal):
+            # print(self.tileInfo[ii])
 
         # Try Move
         moveSuccess = self.tryMove()
@@ -120,5 +120,10 @@ class MyAI(AI):
         flagSuccess = self.tryFlag()
         if flagSuccess:
             return Action(self.nextAction, self.colX, self.rowY)
+
+        if flagSuccess is False and moveSuccess is False:
+            randomX = random.randrange(self.colTotal)
+            randomY = random.randrange(self.rowTotal)
+            return Action(AI.Action.UNCOVER, randomX, randomY)
 
         return Action(AI.Action.LEAVE)  # return(Action, x, y)
