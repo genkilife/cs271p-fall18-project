@@ -14,7 +14,12 @@
 
 from AI import AI
 from Action import Action
+import time
 import random
+
+
+
+# todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
 class MyAI(AI):
     def __init__(self, rowDimension, colDimension, totalMines, startX, startY):
@@ -27,7 +32,16 @@ class MyAI(AI):
         self.colX = startX
         self.rowY = startY
         self.nextAction = AI.Action.LEAVE
-        self.test = 0
+        self.uncoveredNum = 0
+        self.flagNum = 0
+
+        self.trySolutions = []
+        self.knownMine = [[-5 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
+        self.knownEmpty = [[-5 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
+        self.knownMineQueue = []
+        self.knownEmptyQueue = []
+        self.borderTiles = []
+        self.uncertainTile = []
         pass
 
     def updateTileInfo(self, info: int, x: int, y: int):
@@ -35,36 +49,48 @@ class MyAI(AI):
         # 0-8: # of mines around the tile
         # -1: covered
         # -2: flagged
-
         if info == -1:
             self.tileInfo[self.rowTotal-1-y][x] = -2  # need to take care of UNFLAG action
+            self.knownMine[self.rowTotal - 1 - y][x] = True
         else:
             self.tileInfo[self.rowTotal-1-y][x] = info
+            self.knownEmpty[self.rowTotal - 1 - y][x] = True
         return
 
-    # check if the tile were inside boundary
-    def _isInBound(self, x: int, y: int) -> bool:
+    # check if the tile were the boundary so far
+    def _isBorder(self, x: int, y: int) -> bool:
+        if self.tileInfo[self.rowTotal-1-y][x] != -1:
+            return False
+
+        for i, j in self.dirs:
+            nx, ny = x+i, y+j
+            if self._isBoardBound(nx, ny) and self.tileInfo[self.rowTotal-1-ny][nx] != -1:
+                return True
+        return False
+
+    # check if the tile were inside boarder boundary
+    def _isBoardBound(self, x: int, y: int) -> bool:
         if 0 <= x < self.colTotal and 0 <= y < self.rowTotal:
             return True
         return False
 
     # count how many covered tiles around position(x, y)
-    def countCoveredTiles(self, x: int, y: int):
+    def countCoveredTiles(self, tileInfo: list, x: int, y: int):
         coveredTiles = 0
         for i, j in self.dirs:
             nx, ny = x+i, y+j
-            if self._isInBound(nx, ny) and self.tileInfo[self.rowTotal-1-ny][nx] == -1:
+            if self._isBoardBound(nx, ny) and tileInfo[self.rowTotal-1-ny][nx] == -1:
                 coveredTiles += 1
             else:
                 continue
         return coveredTiles
 
     # count how many flagged tiles around position(x, y)
-    def countFlaggedTiles(self, x: int, y: int):
+    def countFlaggedTiles(self, tileInfo: list, x: int, y: int):
         flaggedTiles = 0
         for i, j in self.dirs:
             nx, ny = x+i, y+j
-            if self._isInBound(nx, ny) and self.tileInfo[self.rowTotal-1-ny][nx] == -2:
+            if self._isBoardBound(nx, ny) and tileInfo[self.rowTotal-1-ny][nx] == -2:
                 flaggedTiles += 1
             else:
                 continue
@@ -72,58 +98,219 @@ class MyAI(AI):
 
     # try to flag all determined mines around tile (rowY, colX)
     def tryFlag(self):
-        success = False
         for i in range(self.colTotal):
             for j in range(self.rowTotal):
                 if self.tileInfo[self.rowTotal-1-j][i] > 0:
                     curMines = self.tileInfo[self.rowTotal-1-j][i]
-                    curCoveredTiles = self.countCoveredTiles(i, j)
-                    curFlaggedTiles = self.countFlaggedTiles(i, j)
+                    curCoveredTiles = self.countCoveredTiles(self.tileInfo, i, j)
+                    curFlaggedTiles = self.countFlaggedTiles(self.tileInfo, i, j)
                     if curMines - curFlaggedTiles == curCoveredTiles:
                         for ni, nj in self.dirs:
-                            if self._isInBound(i+ni, j+nj) and self.tileInfo[self.rowTotal-1-j-nj][i+ni] == -1:
+                            if self._isBoardBound(i+ni, j+nj) and self.tileInfo[self.rowTotal-1-j-nj][i+ni] == -1:
+                                if (i+ni, j+nj) in self.knownMineQueue:
+                                    self.knownMineQueue.remove((i+ni, j+nj))
                                 self.colX, self.rowY = i+ni, j+nj
                                 self.nextAction = AI.Action.FLAG
-                                success = True
-        return success
+                                return True
+        return False
 
     # try to uncover all determined empty tiles around tile (rowY, colX)
     def tryMove(self):
-        success = False
         for i in range(self.colTotal):
             for j in range(self.rowTotal):
                 if self.tileInfo[self.rowTotal-1-j][i] >= 0:
-                    self.test = 0
                     curMines = self.tileInfo[self.rowTotal-1-j][i]
-                    curCoveredTiles = self.countCoveredTiles(i, j)
-                    curFlaggedTiles = self.countFlaggedTiles(i, j)
+                    curCoveredTiles = self.countCoveredTiles(self.tileInfo, i, j)
+                    curFlaggedTiles = self.countFlaggedTiles(self.tileInfo, i, j)
                     if curMines == curFlaggedTiles and curCoveredTiles > 0:
-                        # print("position of tryMove: ", i, j)
                         for ni, nj in self.dirs:
-                            if self._isInBound(i+ni, j+nj) and self.tileInfo[self.rowTotal-1-j-nj][i+ni] == -1:
+                            if self._isBoardBound(i+ni, j+nj) and self.tileInfo[self.rowTotal-1-j-nj][i+ni] == -1:
+                                if (i+ni, j+nj) in self.knownEmptyQueue:
+                                    self.knownEmptyQueue.remove((i+ni, j+nj))
                                 self.colX, self.rowY = i+ni, j+nj
                                 self.nextAction = AI.Action.UNCOVER
-                                success = True
-        return success
+                                return True
+        return False
+
+    #
+    def trySolver(self):
+
+        borderEmptyTiles = []
+        # emptyTiles = []
+
+        # check how many empty tiles under dilemma scenario
+        # for i in range(self.colTotal):
+        #     for j in range(self.rowTotal):
+        #         if self.tileInfo[self.rowTotal-1-j][i] == -1:
+        #             emptyTiles.append((i, j))  # need to sync the format
+
+        for i in range(self.colTotal):
+            for j in range(self.rowTotal):
+                if self._isBorder(i, j):
+                    borderEmptyTiles.append((i, j))
+
+        if len(borderEmptyTiles) > 20:
+            return
+
+        self.borderTiles.clear()
+        for i in range(self.colTotal):
+            for j in range(self.rowTotal):
+                if self.tileInfo[self.rowTotal-1-j][i] >= 0 and self.countCoveredTiles(self.tileInfo, i, j) > 0:
+                    self.borderTiles.append((i, j))
+
+        # skip optimized method
+        # borderEmptyTiles = emptyTiles
+
+        segregated = []
+        segregated.append(borderEmptyTiles)
+
+        # complex part
+        totalMultCases = 1
+        for i in range(len(segregated)):
+
+            # copy everything into temporary objects
+            try_TileInfo = self.tileInfo.copy()
+
+            self.trySolutions.clear()
+            self.knownMine = [[-1 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
+            self.knownEmpty = [[-1 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
+            for s in range(self.colTotal):
+                for t in range(self.rowTotal):
+                    if try_TileInfo[self.rowTotal-1-t][s] >= 0:
+                        self.knownEmpty[self.rowTotal-1-t][s] = 0
+                    elif try_TileInfo[self.rowTotal-1-t][s] == -2:
+                        self.knownEmpty[self.rowTotal-1-t][s] = 0
+                        self.knownMine[self.rowTotal-1-t][s] = -2
+
+            startTime = time.time()
+            self.tryRecursive(segregated[i], 0)
+            endTime = time.time()
+
+            # print("Total tryRecursion time: ", endTime - startTime)
+
+            # something wrong during tryRecursive
+            if len(self.trySolutions) == 0:
+                return
+
+            # check for solved tiles
+            for j in range(len(segregated[i])):
+                allMine = True
+                allEmpty = True
+                for sln in self.trySolutions:
+                    if sln[j] is False:
+                        allMine = False
+                    if sln[j]:
+                        allEmpty = False
+
+                qi, qj = segregated[i][j]
+
+                if allMine:
+                    self.knownMineQueue.append((qi, qj))
+                if allEmpty:
+                    self.knownEmptyQueue.append((qi, qj))
+
+            totalMultCases += len(self.trySolutions)
+
+            # calculate probabilities in case we need it
+
+        return
+
+    def tryRecursive(self, borderTile, k):
+        # possible combination found
+        if k == len(borderTile):
+            for i, j in self.borderTiles:
+                num = self.tileInfo[self.rowTotal - 1 - j][i]
+                numFlags = self.countFlaggedTiles(self.knownMine, i, j)
+                if num >= 0 and numFlags != num:
+                    return
+
+            solution = [False for _ in range(len(borderTile))]
+            for i in range(len(borderTile)):
+                posX, posY = borderTile[i]
+                solution[i] = True if self.knownMine[self.rowTotal-1-posY][posX] == -2 else False
+            self.trySolutions.append(solution)
+            return
+
+        qx, qy = borderTile[k]
+
+        # recurse two possibilities: mine and no mine
+        self.knownMine[self.rowTotal-1-qy][qx] = -2
+        self.tryRecursive(borderTile, k+1)
+        self.knownMine[self.rowTotal-1-qy][qx] = -1
+
+        self.knownEmpty[self.rowTotal-1-qy][qx] = 0
+        self.tryRecursive(borderTile, k+1)
+        self.knownEmpty[self.rowTotal-1-qy][qx] = -1
 
     def getAction(self, number: int) -> "Action Object":
         self.updateTileInfo(number, self.colX, self.rowY)
         # for ii in range(self.rowTotal):
             # print(self.tileInfo[ii])
 
-        # Try Move
-        moveSuccess = self.tryMove()
-        if moveSuccess:
-            return Action(self.nextAction, self.colX, self.rowY)
+        # if all mines are flagged, and there were still uncovered tiles
+        if self.flagNum == self.minesTotal and self.uncoveredNum != self.rowTotal * self.colTotal:
+            for i in range(self.colTotal):
+                for j in range(self.rowTotal):
+                    if self.tileInfo[self.rowTotal-1-j][i] == -1:
+                        self.colX, self.rowY = i, j
+                        self.nextAction = AI.Action.UNCOVER
+                        self.uncoveredNum += 1
+                        return Action(self.nextAction, self.colX, self.rowY)
+        elif self.uncoveredNum != self.rowTotal * self.colTotal:
+            # Try Move
+            moveSuccess = self.tryMove()
+            if moveSuccess:
+                self.uncoveredNum += 1
+                return Action(self.nextAction, self.colX, self.rowY)
 
-        # Try Flag
-        flagSuccess = self.tryFlag()
-        if flagSuccess:
-            return Action(self.nextAction, self.colX, self.rowY)
+            # Try Flag
+            flagSuccess = self.tryFlag()
+            if flagSuccess:
+                self.flagNum += 1
+                self.uncoveredNum += 1
+                return Action(self.nextAction, self.colX, self.rowY)
 
-        if flagSuccess is False and moveSuccess is False:
-            randomX = random.randrange(self.colTotal)
-            randomY = random.randrange(self.rowTotal)
-            return Action(AI.Action.UNCOVER, randomX, randomY)
+            if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
+                # print("trySolver start!!!")
+                self.trySolver()
+                # print("Known Mine: ", self.knownMineQueue)
+                # print("Known Empty: ", self.knownEmptyQueue)
 
-        return Action(AI.Action.LEAVE)  # return(Action, x, y)
+            while self.knownMineQueue:
+                self.colX, self.rowY = self.knownMineQueue.pop()
+                self.nextAction = AI.Action.FLAG
+                self.flagNum += 1
+                self.uncoveredNum += 1
+                return Action(self.nextAction, self.colX, self.rowY)
+
+            while self.knownEmptyQueue:
+                self.colX, self.rowY = self.knownEmptyQueue.pop()
+                self.nextAction = AI.Action.UNCOVER
+                self.uncoveredNum += 1
+                return Action(self.nextAction, self.colX, self.rowY)
+
+            # todo: implement probabilities
+            if self.uncoveredNum != self.colTotal*self.rowTotal:
+                self.uncertainTile.clear()
+                for i in range(self.colTotal):
+                    for j in range(self.rowTotal):
+                        if self.tileInfo[self.rowTotal-1-j][i] == -1:
+                            self.uncertainTile.append((i, j))
+                idx = random.randrange(len(self.uncertainTile))
+                self.colX, self.rowY = self.uncertainTile[idx]
+                self.nextAction = AI.Action.UNCOVER
+                self.uncoveredNum += 1
+                return Action(self.nextAction, self.colX, self.rowY)
+
+        return Action(AI.Action.LEAVE)
+
+    # while True:
+    # need to re-think the break point
+    # randomX = random.randrange(self.colTotal)
+    # randomY = random.randrange(self.rowTotal)
+    # if self.uncoveredNum == self.rowTotal * self.colTotal - 1:
+    #     break
+    # if self.tileInfo[self.rowTotal-1-randomY][randomX] == -1:
+    #     self.uncoveredNum += 1
+    #     self.colX, self.rowY = randomX, randomY
+    #     return Action(AI.Action.UNCOVER, randomX, randomY)
