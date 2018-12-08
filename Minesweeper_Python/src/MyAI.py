@@ -36,8 +36,8 @@ class MyAI(AI):
         self.flagNum = 0
 
         self.trySolutions = []
-        self.knownMine = [[-5 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
-        self.knownEmpty = [[-5 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
+        self.knownMine = [[-5 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
+        self.knownEmpty = [[-5 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
         self.knownMineQueue = []
         self.knownEmptyQueue = []
         self.borderTiles = []
