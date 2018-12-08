@@ -36,8 +36,8 @@ class MyAI(AI):
         self.flagNum = 0
 
         self.trySolutions = []
-        self.knownMine = [[-5 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
-        self.knownEmpty = [[-5 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
+        self.knownMine = [[-5 for _ in range(colDimension)] for _ in range(rowDimension)]
+        self.knownEmpty = [[-5 for _ in range(colDimension)] for _ in range(rowDimension)]
         self.knownMineQueue = []
         self.knownEmptyQueue = []
         self.borderTiles = []
@@ -172,8 +172,8 @@ class MyAI(AI):
             try_TileInfo = self.tileInfo.copy()
 
             self.trySolutions.clear()
-            self.knownMine = [[-1 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
-            self.knownEmpty = [[-1 for _ in range(self.rowTotal)] for _ in range(self.colTotal)]
+            self.knownMine = [[-1 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
+            self.knownEmpty = [[-1 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
             for s in range(self.colTotal):
                 for t in range(self.rowTotal):
                     if try_TileInfo[self.rowTotal-1-t][s] >= 0:
@@ -243,6 +243,7 @@ class MyAI(AI):
         self.knownEmpty[self.rowTotal-1-qy][qx] = -1
 
     def getAction(self, number: int) -> "Action Object":
+        print("X: ", self.colX, "Y: ", self.rowY)
         self.updateTileInfo(number, self.colX, self.rowY)
         # for ii in range(self.rowTotal):
             # print(self.tileInfo[ii])
@@ -270,11 +271,13 @@ class MyAI(AI):
                 self.uncoveredNum += 1
                 return Action(self.nextAction, self.colX, self.rowY)
 
+
+            print("test")
             if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
                 # print("trySolver start!!!")
                 self.trySolver()
-                # print("Known Mine: ", self.knownMineQueue)
-                # print("Known Empty: ", self.knownEmptyQueue)
+                print("Known Mine: ", self.knownMineQueue)
+                print("Known Empty: ", self.knownEmptyQueue)
 
             while self.knownMineQueue:
                 self.colX, self.rowY = self.knownMineQueue.pop()
