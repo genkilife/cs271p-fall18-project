@@ -243,7 +243,7 @@ class MyAI(AI):
         self.knownEmpty[self.rowTotal-1-qy][qx] = -1
 
     def getAction(self, number: int) -> "Action Object":
-        print("X: ", self.colX, "Y: ", self.rowY)
+        # print("X: ", self.colX, "Y: ", self.rowY)
         self.updateTileInfo(number, self.colX, self.rowY)
         # for ii in range(self.rowTotal):
             # print(self.tileInfo[ii])
@@ -272,12 +272,12 @@ class MyAI(AI):
                 return Action(self.nextAction, self.colX, self.rowY)
 
 
-            print("test")
+            # print("test")
             if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
                 # print("trySolver start!!!")
                 self.trySolver()
-                print("Known Mine: ", self.knownMineQueue)
-                print("Known Empty: ", self.knownEmptyQueue)
+                # print("Known Mine: ", self.knownMineQueue)
+                # print("Known Empty: ", self.knownEmptyQueue)
 
             while self.knownMineQueue:
                 self.colX, self.rowY = self.knownMineQueue.pop()
