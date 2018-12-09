@@ -32,7 +32,7 @@ class MyAI(AI):
         self.uncoveredNum = 0
         self.flagNum = 0
 
-        self.magicNum = 10
+        self.magicNum = 16
 
         self.trySolutions = []  # all possible solutions for current state
         self.knownMine = [[-1 for _ in range(colDimension)] for _ in range(rowDimension)]
@@ -131,7 +131,7 @@ class MyAI(AI):
 
     #
     def trySolver(self):
-        print("trySolver Start!")
+        # print("trySolver Start!")
         borderEmptyTiles = []
 
         for i in range(self.colTotal):
@@ -139,8 +139,8 @@ class MyAI(AI):
                 if self._isBorder(i, j):
                     borderEmptyTiles.append((i, j))
 
-        if len(borderEmptyTiles) > 40:
-            return
+        # if len(borderEmptyTiles) > 40:
+        #     return
 
         self.borderTiles.clear()
         for i in range(self.colTotal):
@@ -149,8 +149,12 @@ class MyAI(AI):
                     self.borderTiles.append((i, j))
 
         segregated = []
-        segregated.append(borderEmptyTiles[0:self.magicNum])
-        print(segregated)
+        partition = len(borderEmptyTiles)//self.magicNum
+        for i in range(partition):
+            segregated.append(borderEmptyTiles[i*self.magicNum:(i+1)*self.magicNum])
+
+        # print(segregated)
+        # print(self.borderTiles)
 
         # complex part
         for i in range(len(segregated)):
@@ -163,7 +167,8 @@ class MyAI(AI):
                 return
 
             # check for solved tiles
-            for j in range(len(segregated[i])):
+            # for j in range(len(segregated[i])):
+            for j in range(4, self.magicNum - 4):
                 allMine, allEmpty = True, True
                 for sln in self.trySolutions:
                     if sln[j] is False:
@@ -180,17 +185,15 @@ class MyAI(AI):
                 if allEmpty:
                     self.knownEmptyQueue.append((qi, qj))
 
-            # calculate probabilities in case we need it
-
         return
 
     def tryRecursive(self, borderTile, k):
         # possible combination found
         if k == len(borderTile):
-            for i, j in self.borderTiles[0:self.magicNum]:
+            for i, j in self.borderTiles[4:self.magicNum-4]:
                 num = self.tileInfo[self.rowTotal - 1 - j][i]
                 numFlags = self.countFlaggedTiles(self.knownMine, i, j)
-                if num >= 0 and numFlags >= num:
+                if num >= 0 and numFlags != num:
                     return
 
             solution = [False for _ in range(len(borderTile))]
