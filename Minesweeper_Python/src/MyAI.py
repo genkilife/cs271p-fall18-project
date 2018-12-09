@@ -21,7 +21,7 @@ class Term():
         self.coefficient = coff
         self.var = var
     def __lt__(self, other):
-        return self.coefficient < other.coefficient
+        return self.var < other.var
     def __str__(self):
         return "( " + str(self.coefficient) + " " + str(self.var) + " )"
 
@@ -46,28 +46,27 @@ class PolynomialEqation():
     def __copy__(self):
         return PolynomialEqation(self.numOfBomb, self.terms)
     
-    def __sub__(self, other):
-        ret = PolynomialEqation(self.numOfBomb, self.terms)
-        
-        ret.numOfBomb = ret.numOfBomb - other.numOfBomb
+    def sub(self, other):
+        self.numOfBomb = self.numOfBomb - other.numOfBomb
         
         for term in other.terms:
             idxRet = 0
-            for idxRet in range(len(ret.terms)):
-                if ret.terms[idxRet].var == term.var:
+            while idxRet < len(self.terms):
+                if self.terms[idxRet].var == term.var:
                     break
+                idxRet = idxRet + 1
             
-            if idxRet != len(ret.terms):
-                ret.terms[idxRet].coefficient = ret.terms[idxRet].coefficient - term.coefficient
-                if ret.terms[idxRet].coefficient == 0:
-                    del ret.terms[idxRet]
+            if idxRet != len(self.terms):
+                self.terms[idxRet].coefficient = self.terms[idxRet].coefficient - term.coefficient
+                if self.terms[idxRet].coefficient == 0:
+                    del self.terms[idxRet]
             else:
                 newTerm = Term(term.coefficient * -1, term.var)
-                ret.terms.append(newTerm)
+                self.terms.append(newTerm)
                 
-        ret.terms.sort()
+        self.terms.sort()
         
-        return ret
+        return
     
     def __str__(self):
         assert(len(self.terms) > 0)
@@ -274,9 +273,7 @@ class MyAI(AI):
         else:
             return
         self.knownMine[self.rowTotal-1-qy][qx] = -1
-        self.knownEmpty[self.rowTotal-1-qy][qx] = 0
         self.tryRecursive(borderTile, k+1)
-        self.knownEmpty[self.rowTotal-1-qy][qx] = -1
 
     def solutionCheck(self, borderTile, x, y):
         for ni, nj in self.dirs:
@@ -330,11 +327,13 @@ class MyAI(AI):
                     while idxInner < len(polys):
                         if idxInner != idxOuter and term.var in list(map(lambda term: term.var, polys[idxInner].terms)) and len(polys[idxInner].terms) > 1:
                             continueFlag = True
-                            polys[idxInner] = polys[idxInner] - polys[idxOuter]
+                            polys[idxInner].sub(polys[idxOuter])
                             assert(len(polys[idxInner].terms)>=0)
                             if len(polys[idxInner].terms) == 0:
                                 del polys[idxInner]
                                 idxInner = idxInner-1
+                            else:
+                                polys[idxInner].sort()
                         idxInner = idxInner + 1
                     idxOuter = idxOuter + 1
                 polys.sort()
@@ -407,8 +406,8 @@ class MyAI(AI):
                 return Action(self.nextAction, self.colX, self.rowY)
 
             if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
-                # print("trySolver start!!!")
                 self.trySolverGaussaion()
+                pass
                 
             # print("test")
             if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
