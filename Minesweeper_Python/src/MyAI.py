@@ -32,6 +32,8 @@ class MyAI(AI):
         self.uncoveredNum = 0
         self.flagNum = 0
 
+        self.magicNum = 10
+
         self.trySolutions = []  # all possible solutions for current state
         self.knownMine = [[-1 for _ in range(colDimension)] for _ in range(rowDimension)]
         self.knownMineQueue = []
@@ -147,7 +149,8 @@ class MyAI(AI):
                     self.borderTiles.append((i, j))
 
         segregated = []
-        segregated.append(borderEmptyTiles)
+        segregated.append(borderEmptyTiles[0:self.magicNum])
+        print(segregated)
 
         # complex part
         for i in range(len(segregated)):
@@ -184,10 +187,10 @@ class MyAI(AI):
     def tryRecursive(self, borderTile, k):
         # possible combination found
         if k == len(borderTile):
-            for i, j in self.borderTiles:
+            for i, j in self.borderTiles[0:self.magicNum]:
                 num = self.tileInfo[self.rowTotal - 1 - j][i]
                 numFlags = self.countFlaggedTiles(self.knownMine, i, j)
-                if num >= 0 and numFlags != num:
+                if num >= 0 and numFlags >= num:
                     return
 
             solution = [False for _ in range(len(borderTile))]
