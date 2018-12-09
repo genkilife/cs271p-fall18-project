@@ -23,7 +23,7 @@ class Term():
     def __lt__(self, other):
         return self.coefficient < other.coefficient
     def __str__(self):
-        return str(self.coefficient) + " " + str(self.var) 
+        return "( " + str(self.coefficient) + " " + str(self.var) + " )"
 
 class PolynomialEqation():
     def __init__(self, numOfBomb=None, terms=None):
@@ -66,9 +66,10 @@ class PolynomialEqation():
         return ret
     
     def __str__(self):
-        ret = ""
-        for term in self.terms:
-            ret = ret + str(term)
+        assert(len(self.terms) > 0)
+        ret = str(self.terms[0])
+        for term in self.terms[1:]:
+            ret = ret + " , " + str(term)
         ret = ret + " = " + str(self.numOfBomb)
         return ret
 
@@ -309,7 +310,7 @@ class MyAI(AI):
                     polynomialEquation.numOfBomb = polynomialEquation.numOfBomb - 1
                 elif self.tileInfo[self.rowTotal-1-ny][nx] == -1:
                     # if covered, add one term
-                    term = Term((nx, ny), 1)
+                    term = Term(1, (nx, ny))
                     polynomialEquation.terms.append(term)
             else:
                 continue
