@@ -206,13 +206,14 @@ class MyAI(AI):
         qx, qy = borderTile[k]
 
         # recurse two possibilities: mine and no mine
+        assert(self.knownMine[self.rowTotal-1-qy][qx] == -1)
         self.knownMine[self.rowTotal-1-qy][qx] = -2
         if self.solutionCheck(borderTile, qx, qy) is True:
             self.tryRecursive(borderTile, k+1)
         else:
             return
         self.knownMine[self.rowTotal-1-qy][qx] = -1
-
+        self.knownEmpty[self.rowTotal-1-qy][qx] = 0
         self.tryRecursive(borderTile, k+1)
 
     def solutionCheck(self, borderTile, x, y):
