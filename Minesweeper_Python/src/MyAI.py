@@ -432,8 +432,8 @@ class MyAI(AI):
                 pass
                 
             # print("test")
-            if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
-                self.trySolver()
+            #if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
+            #    self.trySolver()
                 # print("Known Mine: ", self.knownMineQueue)
                 # print("Known Empty: ", self.knownEmptyQueue)
 
