@@ -334,13 +334,28 @@ class MyAI(AI):
             assert(len(polys[idxOuter].terms)>1)
         
         # find items in term
-        for idxOuter in range(len(polys)):
-            assert(len(polys[idxOuter].terms) > 0)
-            term = polys[idxOuter].terms[0]
-            for idxInner in range(len(polys)):
-                if idxInner != idxOuter and term.var in list(map(lambda term: term.var, polys[idxInner].terms)) and len(polys[idxInner].terms) > 1:
-                    polys[idxInner] = polys[idxInner] - polys[idxOuter]
-            polys.sort()
+        continueFlag = True
+        while continueFlag:
+            continueFlag = False
+            try:
+                idxOuter = 0
+                while idxOuter < len(polys):
+                    assert(len(polys[idxOuter].terms) > 0)
+                    term = polys[idxOuter].terms[0]
+                    idxInner = idxOuter+1
+                    while idxInner < len(polys):
+                        if idxInner != idxOuter and term.var in list(map(lambda term: term.var, polys[idxInner].terms)) and len(polys[idxInner].terms) > 1:
+                            continueFlag = True
+                            polys[idxInner] = polys[idxInner] - polys[idxOuter]
+                            assert(len(polys[idxInner].terms)>=0)
+                            if len(polys[idxInner].terms) == 0:
+                                del polys[idxInner]
+                                idxInner = idxInner-1
+                        idxInner = idxInner + 1
+                    idxOuter = idxOuter + 1
+                polys.sort()
+            except:
+                pass
             
         return
         
