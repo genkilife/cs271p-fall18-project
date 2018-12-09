@@ -21,6 +21,8 @@ class Term():
         self.var = var
     def __le__(self, other):
         return self.coefficient < other.coefficient
+    def __str__(self):
+        return str(self.coefficient) + " " + str(self.var) 
 
 class PolynomialEqation():
     def __init__(self, numOfBomb=None, terms=None):
@@ -39,6 +41,29 @@ class PolynomialEqation():
                 elif self.terms[i] > other.terms[i]:
                     return False
         return False
+    
+    def __copy__(self):
+        return PolynomialEqation(self.numOfBomb, self.terms)
+    
+    def __sub__(self, other):
+        ret = PolynomialEqation(self.numOfBomb, self.terms)
+        
+        ret.numOfBomb = ret.numOfBomb - other.numOfBomb
+        
+        for term in other.terms:
+            try:
+                idxRet = ret.terms.index(term)
+                ret.terms[idxRet].cofficient = ret.terms[idxRet].cofficient - term.coefficient
+                if ret.terms[idxRet].cofficient == 0:
+                    del ret.terms[idxRet]
+            except ValueError:
+                newTerm = Term(term.coefficient * -1, term.var)
+                ret.terms.append(newTerm)
+                
+        ret.terms.sort()
+        
+        return ret
+        
 
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
@@ -262,7 +287,7 @@ class MyAI(AI):
                     polynomialEquation.numOfBomb = polynomialEquation.numOfBomb - 1
                 elif self.tileInfo[self.rowTotal-1-ny][nx] == -1:
                     # if covered, add one term
-                    term = Term((nx, ny), True)
+                    term = Term((nx, ny), 1)
                     polynomialEquation.terms.append(term)
             else:
                 continue
@@ -275,8 +300,33 @@ class MyAI(AI):
                 
         return polynomialEquation     
 
-    def gaussianElimination(self, poly=None):
-        pass
+    def gaussianEliminate(self, polys=None):
+        # check every rules should contain more then one terms
+        for idxOuter in range(len(polys)):
+            assert(len(polys[idxOuter].terms)>1)
+        
+        # find items in term
+        for idxOuter in range(len(polys)):
+            assert(len(polys[idxOuter].terms) > 0)
+            term = polys[idxOuter].terms[0]
+            for idxInner in range(len(polys)):
+                if idxInner != idxOuter and term in polys[idxInner].terms and len(polys[idxInner].terms) > 1:
+                    polys[idxInner] = polys[idxInner] - polys[idxOuter]
+            polys.sort()
+            
+        return
+        
+    def pushAvailableTerms(self, polys=None):
+        for poly in polys:
+            # if it is unary variable
+            if len(poly.terms) == 1:
+                # if no bomb, push into fine queue
+                if poly.numOfBomb == 0:
+                    self.knownEmptyQueue.append(poly.terms[0])
+                else:
+                    assert(poly.numOfBomb % poly.terms[0].coefficient == 0)
+                    self.knownMineQueue.append(poly.terms[0])
+        return
 
     def trySolverGaussaion(self):
         ruleLists = list()
@@ -289,14 +339,15 @@ class MyAI(AI):
                     # We can generate one polynomial based on this information
                     rule = self.createPolynimialRule(i, j)
                     ruleLists.append(rule)
-        
                     
         # Sort polynomial rule list
         ruleLists.sort()
         
         # Gaussian elimination
         self.gaussianEliminate(ruleLists)
+        
         # Push unary variables into known mine / non-mine queue
+        self.pushAvailableTerms(ruleLists)
 
         return
         
