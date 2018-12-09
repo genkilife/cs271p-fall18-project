@@ -15,6 +15,7 @@
 from AI import AI
 from Action import Action
 import random
+
 class Term():
     def __init__(self, coff=None, var=None):
         self.coefficient = coff
@@ -51,12 +52,16 @@ class PolynomialEqation():
         ret.numOfBomb = ret.numOfBomb - other.numOfBomb
         
         for term in other.terms:
-            try:
-                idxRet = ret.terms.index(term)
-                ret.terms[idxRet].cofficient = ret.terms[idxRet].cofficient - term.coefficient
-                if ret.terms[idxRet].cofficient == 0:
+            idxRet = 0
+            for idxRet in range(len(ret.terms)):
+                if ret.terms[idxRet].var == term.var:
+                    break
+            
+            if idxRet != len(ret.terms):
+                ret.terms[idxRet].coefficient = ret.terms[idxRet].coefficient - term.coefficient
+                if ret.terms[idxRet].coefficient == 0:
                     del ret.terms[idxRet]
-            except ValueError:
+            else:
                 newTerm = Term(term.coefficient * -1, term.var)
                 ret.terms.append(newTerm)
                 
@@ -317,7 +322,7 @@ class MyAI(AI):
             assert(len(polys[idxOuter].terms) > 0)
             term = polys[idxOuter].terms[0]
             for idxInner in range(len(polys)):
-                if idxInner != idxOuter and term in polys[idxInner].terms and len(polys[idxInner].terms) > 1:
+                if idxInner != idxOuter and term.var in list(map(lambda term: term.var, polys[idxInner].terms)) and len(polys[idxInner].terms) > 1:
                     polys[idxInner] = polys[idxInner] - polys[idxOuter]
             polys.sort()
             
@@ -329,10 +334,12 @@ class MyAI(AI):
             if len(poly.terms) == 1:
                 # if no bomb, push into fine queue
                 if poly.numOfBomb == 0:
-                    self.knownEmptyQueue.append(poly.terms[0])
+                    if poly.terms[0].var not in self.knownEmptyQueue:
+                        self.knownEmptyQueue.append(poly.terms[0].var)
                 else:
                     assert(poly.numOfBomb % poly.terms[0].coefficient == 0)
-                    self.knownMineQueue.append(poly.terms[0])
+                    if poly.terms[0].var not in self.knownMineQueue:
+                        self.knownMineQueue.append(poly.terms[0].var)
         return
 
     def trySolverGaussaion(self):
