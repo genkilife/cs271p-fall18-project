@@ -17,7 +17,9 @@ from Action import Action
 import time
 import random
 
-
+class PolynomialEqation(self):
+    def __init__(self):
+        pass
 
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
@@ -244,6 +246,9 @@ class MyAI(AI):
         self.tryRecursive(borderTile, k+1)
         self.knownEmpty[self.rowTotal-1-qy][qx] = -1
 
+    def trySolverGaussaion(self):
+        pass
+        
     def getAction(self, number: int) -> "Action Object":
         # print("X: ", self.colX, "Y: ", self.rowY)
         self.updateTileInfo(number, self.colX, self.rowY)
