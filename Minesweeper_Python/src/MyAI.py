@@ -19,7 +19,7 @@ class Term():
     def __init__(self, coff=None, var=None):
         self.coefficient = coff
         self.var = var
-    def __le__(self, other):
+    def __lt__(self, other):
         return self.coefficient < other.coefficient
     def __str__(self):
         return str(self.coefficient) + " " + str(self.var) 
@@ -29,7 +29,7 @@ class PolynomialEqation():
         self.numOfBomb = numOfBomb
         self.terms = terms
     
-    def __le__(self, other):
+    def __lt__(self, other):
         if len(self.terms) < len(other.terms):
             return True
         elif len(self.terms) > len(other.terms):
@@ -377,6 +377,10 @@ class MyAI(AI):
                 self.uncoveredNum += 1
                 return Action(self.nextAction, self.colX, self.rowY)
 
+            if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
+                # print("trySolver start!!!")
+                self.trySolverGaussaion()
+                
             # print("test")
             if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
                 self.trySolver()
