@@ -20,11 +20,26 @@ class Term():
     def __init__(self, coff=None, var=None):
         self.coefficient = coff
         self.var = var
+    def __le__(self, other):
+        return self.coefficient < other.coefficient
 
 class PolynomialEqation():
     def __init__(self, numOfBomb=None, terms=None):
         self.numOfBomb = numOfBomb
         self.terms = terms
+    
+    def __le__(self, other):
+        if len(self.terms) < len(other.terms):
+            return True
+        elif len(self.terms) > len(other.terms):
+            return False
+        else:
+            for i in range(len(self.terms)):
+                if self.terms[i] < other.terms[i]:
+                    return True
+                elif self.terms[i] > other.terms[i]:
+                    return False
+        return False
 
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
@@ -268,7 +283,10 @@ class MyAI(AI):
             else:
                 continue
                 
+        polynomialEquation.terms.sort()
+                
         assert(polynomialEquation.numOfBomb > 0)
+        assert(len(polynomialEquation.terms) > 0)
         assert(len(polynomialEquation.terms) >= polynomialEquation.numOfBomb)
                 
         return polynomialEquation     
@@ -284,8 +302,10 @@ class MyAI(AI):
                     # We can generate one polynomial based on this information
                     rule = self.createPolynimialRule(self, i, j)
                     ruleLists.append(rule)
+        
                     
         # Sort polynomial rule list
+        ruleLists.sort()
         
         # Gaussian elimination
         
