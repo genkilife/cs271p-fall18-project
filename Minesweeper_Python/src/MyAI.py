@@ -46,8 +46,17 @@ class PolynomialEqation():
     def __copy__(self):
         return PolynomialEqation(self.numOfBomb, self.terms)
     
-    def sub(self, other):
-        self.numOfBomb = self.numOfBomb - other.numOfBomb
+    def waive(self, other):
+        termPivot = other.terms[0]
+        assert(abs(termPivot.coefficient) == 1)
+        
+        ratio = None
+        for term in self.terms:
+            if term.var == termPivot.var:
+                ratio = int(term.coefficient / termPivot.coefficient)
+                break
+        
+        self.numOfBomb = self.numOfBomb - other.numOfBomb * ratio
         
         for term in other.terms:
             idxRet = 0
@@ -57,11 +66,11 @@ class PolynomialEqation():
                 idxRet = idxRet + 1
             
             if idxRet != len(self.terms):
-                self.terms[idxRet].coefficient = self.terms[idxRet].coefficient - term.coefficient
+                self.terms[idxRet].coefficient = self.terms[idxRet].coefficient - term.coefficient * ratio
                 if self.terms[idxRet].coefficient == 0:
                     del self.terms[idxRet]
             else:
-                newTerm = Term(term.coefficient * -1, term.var)
+                newTerm = Term(term.coefficient * -1 * ratio, term.var)
                 self.terms.append(newTerm)
                 
         self.terms.sort()
@@ -323,11 +332,14 @@ class MyAI(AI):
                 while idxOuter < len(polys):
                     assert(len(polys[idxOuter].terms) > 0)
                     term = polys[idxOuter].terms[0]
+                    if abs(term.coefficient) != 1:
+                        continue
+                        
                     idxInner = idxOuter+1
                     while idxInner < len(polys):
                         if idxInner != idxOuter and term.var in list(map(lambda term: term.var, polys[idxInner].terms)) and len(polys[idxInner].terms) > 1:
                             continueFlag = True
-                            polys[idxInner].sub(polys[idxOuter])
+                            polys[idxInner].waive(polys[idxOuter])
                             assert(len(polys[idxInner].terms)>=0)
                             if len(polys[idxInner].terms) == 0:
                                 del polys[idxInner]
