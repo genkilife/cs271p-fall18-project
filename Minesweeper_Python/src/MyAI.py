@@ -15,10 +15,15 @@
 from AI import AI
 from Action import Action
 import random
+class Term():
+    def __init__(self, coff=None, var=None):
+        self.coefficient = coff
+        self.var = var
 
-class PolynomialEqation(self):
-    def __init__(self):
-        pass
+class PolynomialEqation():
+    def __init__(self, numOfBomb=None, terms=None):
+        self.numOfBomb = numOfBomb
+        self.terms = terms
 
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
@@ -219,6 +224,7 @@ class MyAI(AI):
         self.knownMine[self.rowTotal-1-qy][qx] = -1
         self.knownEmpty[self.rowTotal-1-qy][qx] = 0
         self.tryRecursive(borderTile, k+1)
+        self.knownEmpty[self.rowTotal-1-qy][qx] = -1
 
     def solutionCheck(self, borderTile, x, y):
         for ni, nj in self.dirs:
@@ -228,9 +234,48 @@ class MyAI(AI):
                 if numFlags > num >= 0:
                     return False
         return True
+    
+    def createPolynimialRule(self, col, row):
+        assert(self.tileInfo[self.rowTotal-1-row][col] != -1)
+        polynomialEquation = PolynomialEqation(self.tileInfo[self.rowTotal-1-row][col], [])
+
+        for i, j in self.dirs:
+            nx, ny = col+i, row+j
+            if self._isBoardBound(nx, ny):
+                if self.tileInfo[self.rowTotal-1-ny][nx] == -2:
+                    # add one bomnum
+                    polynomialEquation.numOfBomb = polynomialEquation.numOfBomb - 1
+                elif self.tileInfo[self.rowTotal-1-ny][nx] == -1:
+                    # if covered, add one term
+                    term = Term((nx, ny), True)
+                    polynomialEquation.terms.append(term)
+            else:
+                continue
+                
+        assert(polynomialEquation.numOfBomb > 0)
+        assert(len(polynomialEquation.terms) >= polynomialEquation.numOfBomb)
+                
+        return polynomialEquation     
 
     def trySolverGaussaion(self):
-        pass
+        ruleLists = list()
+        
+        # Create rules based on the existing uncovered boarder flag
+        for i in range(self.colTotal):
+            for j in range(self.rowTotal):
+                if self.tileInfo[self.rowTotal-1-j][i] >= 0 and self.countFlaggedTiles(self.tileInfo, i, j) != self.tileInfo[self.rowTotal-1-j][i]:
+                    # This current tile has arounding covered tiles.
+                    # We can generate one polynomial based on this information
+                    rule = self.createPolynimialRule(self, i, j)
+                    ruleLists.append(rule)
+                    
+        # Sort polynomial rule list
+        
+        # Gaussian elimination
+        
+        # Push unary variables into known mine / non-mine queue
+
+        return
         
     def getAction(self, number: int) -> "Action Object":
         self.updateTileInfo(number, self.colX, self.rowY)
