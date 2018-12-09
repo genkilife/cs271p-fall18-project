@@ -118,6 +118,7 @@ class MyAI(AI):
         self.knownEmptyQueue = []
         self.borderTiles = []
         self.uncertainTile = []
+        random.seed(0)
         pass
 
     def updateTileInfo(self, info: int, x: int, y: int):
