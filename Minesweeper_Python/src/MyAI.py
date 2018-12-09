@@ -33,7 +33,7 @@ class MyAI(AI):
         self.flagNum = 0
 
         self.trySolutions = []  # all possible solutions for current state
-        self.knownMine = [[-5 for _ in range(colDimension)] for _ in range(rowDimension)]
+        self.knownMine = [[-1 for _ in range(colDimension)] for _ in range(rowDimension)]
         self.knownMineQueue = []
         self.knownEmptyQueue = []
         self.borderTiles = []
@@ -150,19 +150,9 @@ class MyAI(AI):
         segregated.append(borderEmptyTiles)
 
         # complex part
-        totalMultCases = 1
         for i in range(len(segregated)):
 
-            # copy everything into temporary objects
-            try_TileInfo = self.tileInfo.copy()
-
             self.trySolutions.clear()
-            self.knownMine = [[-1 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
-            for s in range(self.colTotal):
-                for t in range(self.rowTotal):
-                    if try_TileInfo[self.rowTotal-1-t][s] == -2:
-                        self.knownMine[self.rowTotal-1-t][s] = -2
-
             self.tryRecursive(segregated[i], 0)
 
             # something wrong during tryRecursive
@@ -171,13 +161,14 @@ class MyAI(AI):
 
             # check for solved tiles
             for j in range(len(segregated[i])):
-                allMine = True
-                allEmpty = True
+                allMine, allEmpty = True, True
                 for sln in self.trySolutions:
                     if sln[j] is False:
                         allMine = False
                     if sln[j]:
                         allEmpty = False
+                    if allMine is False and allEmpty is False:
+                        break
 
                 qi, qj = segregated[i][j]
 
@@ -185,8 +176,6 @@ class MyAI(AI):
                     self.knownMineQueue.append((qi, qj))
                 if allEmpty:
                     self.knownEmptyQueue.append((qi, qj))
-
-            totalMultCases += len(self.trySolutions)
 
             # calculate probabilities in case we need it
 
