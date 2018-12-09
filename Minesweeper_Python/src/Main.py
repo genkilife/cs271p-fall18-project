@@ -119,6 +119,8 @@ def main():
 
 					numScores += 1
 					sumScores += score
+					if numScores % 30 == 0:
+						print("test cases: " + str(numScores))
 					
 			print("---------------Your agent's results:---------------")
 			print("Beginner: {} \tIntermediate: {} \tExpert: {}".format(scoreBeg, scoreInt, scoreExp))
