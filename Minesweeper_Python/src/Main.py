@@ -108,6 +108,7 @@ def main():
 					f = os.path.join(dirpath, filename)
 
 					world = World(filename=f, aiType=aiType, verbose=verbose, debug=debug)
+					#print("Test file " + filename)
 
 					score = world.run()
 					if score == 1:
@@ -119,6 +120,8 @@ def main():
 
 					numScores += 1
 					sumScores += score
+					if numScores % 30 == 0:
+						print("test cases: " + str(numScores))
 					
 			print("---------------Your agent's results:---------------")
 			print("Beginner: {} \tIntermediate: {} \tExpert: {}".format(scoreBeg, scoreInt, scoreExp))
