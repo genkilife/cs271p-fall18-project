@@ -14,10 +14,7 @@
 
 from AI import AI
 from Action import Action
-import time
 import random
-
-
 
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
@@ -35,9 +32,8 @@ class MyAI(AI):
         self.uncoveredNum = 0
         self.flagNum = 0
 
-        self.trySolutions = []
+        self.trySolutions = []  # all possible solutions for current state
         self.knownMine = [[-5 for _ in range(colDimension)] for _ in range(rowDimension)]
-        self.knownEmpty = [[-5 for _ in range(colDimension)] for _ in range(rowDimension)]
         self.knownMineQueue = []
         self.knownEmptyQueue = []
         self.borderTiles = []
@@ -51,10 +47,9 @@ class MyAI(AI):
         # -2: flagged
         if info == -1:
             self.tileInfo[self.rowTotal-1-y][x] = -2  # need to take care of UNFLAG action
-            self.knownMine[self.rowTotal - 1 - y][x] = True
+            self.knownMine[self.rowTotal - 1 - y][x] = -2
         else:
             self.tileInfo[self.rowTotal-1-y][x] = info
-            self.knownEmpty[self.rowTotal - 1 - y][x] = True
         return
 
     # check if the tile were the boundary so far
@@ -134,22 +129,15 @@ class MyAI(AI):
 
     #
     def trySolver(self):
-
+        print("trySolver Start!")
         borderEmptyTiles = []
-        # emptyTiles = []
-
-        # check how many empty tiles under dilemma scenario
-        # for i in range(self.colTotal):
-        #     for j in range(self.rowTotal):
-        #         if self.tileInfo[self.rowTotal-1-j][i] == -1:
-        #             emptyTiles.append((i, j))  # need to sync the format
 
         for i in range(self.colTotal):
             for j in range(self.rowTotal):
                 if self._isBorder(i, j):
                     borderEmptyTiles.append((i, j))
 
-        if len(borderEmptyTiles) > 20:
+        if len(borderEmptyTiles) > 40:
             return
 
         self.borderTiles.clear()
@@ -157,9 +145,6 @@ class MyAI(AI):
             for j in range(self.rowTotal):
                 if self.tileInfo[self.rowTotal-1-j][i] >= 0 and self.countCoveredTiles(self.tileInfo, i, j) > 0:
                     self.borderTiles.append((i, j))
-
-        # skip optimized method
-        # borderEmptyTiles = emptyTiles
 
         segregated = []
         segregated.append(borderEmptyTiles)
@@ -173,20 +158,12 @@ class MyAI(AI):
 
             self.trySolutions.clear()
             self.knownMine = [[-1 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
-            self.knownEmpty = [[-1 for _ in range(self.colTotal)] for _ in range(self.rowTotal)]
             for s in range(self.colTotal):
                 for t in range(self.rowTotal):
-                    if try_TileInfo[self.rowTotal-1-t][s] >= 0:
-                        self.knownEmpty[self.rowTotal-1-t][s] = 0
-                    elif try_TileInfo[self.rowTotal-1-t][s] == -2:
-                        self.knownEmpty[self.rowTotal-1-t][s] = 0
+                    if try_TileInfo[self.rowTotal-1-t][s] == -2:
                         self.knownMine[self.rowTotal-1-t][s] = -2
 
-            startTime = time.time()
             self.tryRecursive(segregated[i], 0)
-            endTime = time.time()
-
-            # print("Total tryRecursion time: ", endTime - startTime)
 
             # something wrong during tryRecursive
             if len(self.trySolutions) == 0:
@@ -235,18 +212,25 @@ class MyAI(AI):
 
         # recurse two possibilities: mine and no mine
         self.knownMine[self.rowTotal-1-qy][qx] = -2
-        self.tryRecursive(borderTile, k+1)
+        if self.solutionCheck(borderTile, qx, qy) is True:
+            self.tryRecursive(borderTile, k+1)
+        else:
+            return
         self.knownMine[self.rowTotal-1-qy][qx] = -1
 
-        self.knownEmpty[self.rowTotal-1-qy][qx] = 0
         self.tryRecursive(borderTile, k+1)
-        self.knownEmpty[self.rowTotal-1-qy][qx] = -1
+
+    def solutionCheck(self, borderTile, x, y):
+        for ni, nj in self.dirs:
+            if (x+ni, y+nj) in borderTile:
+                num = self.tileInfo[self.rowTotal - 1 - (y+nj)][x+ni]
+                numFlags = self.countFlaggedTiles(self.knownMine, x+ni, y+nj)
+                if numFlags > num >= 0:
+                    return False
+        return True
 
     def getAction(self, number: int) -> "Action Object":
-        # print("X: ", self.colX, "Y: ", self.rowY)
         self.updateTileInfo(number, self.colX, self.rowY)
-        # for ii in range(self.rowTotal):
-            # print(self.tileInfo[ii])
 
         # if all mines are flagged, and there were still uncovered tiles
         if self.flagNum == self.minesTotal and self.uncoveredNum != self.rowTotal * self.colTotal:
@@ -271,10 +255,8 @@ class MyAI(AI):
                 self.uncoveredNum += 1
                 return Action(self.nextAction, self.colX, self.rowY)
 
-
             # print("test")
             if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
-                # print("trySolver start!!!")
                 self.trySolver()
                 # print("Known Mine: ", self.knownMineQueue)
                 # print("Known Empty: ", self.knownEmptyQueue)
@@ -307,13 +289,3 @@ class MyAI(AI):
 
         return Action(AI.Action.LEAVE)
 
-    # while True:
-    # need to re-think the break point
-    # randomX = random.randrange(self.colTotal)
-    # randomY = random.randrange(self.rowTotal)
-    # if self.uncoveredNum == self.rowTotal * self.colTotal - 1:
-    #     break
-    # if self.tileInfo[self.rowTotal-1-randomY][randomX] == -1:
-    #     self.uncoveredNum += 1
-    #     self.colX, self.rowY = randomX, randomY
-    #     return Action(AI.Action.UNCOVER, randomX, randomY)
