@@ -16,6 +16,10 @@ from AI import AI
 from Action import Action
 import random
 
+class PolynomialEqation(self):
+    def __init__(self):
+        pass
+
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
 class MyAI(AI):
@@ -225,6 +229,9 @@ class MyAI(AI):
                     return False
         return True
 
+    def trySolverGaussaion(self):
+        pass
+        
     def getAction(self, number: int) -> "Action Object":
         self.updateTileInfo(number, self.colX, self.rowY)
 
