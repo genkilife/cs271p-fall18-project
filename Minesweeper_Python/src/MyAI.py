@@ -14,6 +14,7 @@
 
 from AI import AI
 from Action import Action
+from copy import copy, deepcopy
 import random
 
 class Term():
@@ -24,6 +25,11 @@ class Term():
         return self.var < other.var
     def __str__(self):
         return "( " + str(self.coefficient) + " " + str(self.var) + " )"
+    def __copy__(self):
+        ret = Term()
+        ret.coefficient = self.coefficient.copy()
+        ret.var = self.var.copy()
+        return ret
 
 class PolynomialEqation():
     def __init__(self, numOfBomb=None, terms=None):
@@ -44,7 +50,10 @@ class PolynomialEqation():
         return False
     
     def __copy__(self):
-        return PolynomialEqation(self.numOfBomb, self.terms)
+        ret = PolynomialEqation()
+        ret.numOfBomb = self.numOfBomb.copy()
+        ret.terms = self.terms.copy()
+        return ret
     
     def waive(self, other):
         termPivot = other.terms[0]
