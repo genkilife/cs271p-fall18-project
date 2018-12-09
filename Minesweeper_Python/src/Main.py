@@ -108,6 +108,7 @@ def main():
 					f = os.path.join(dirpath, filename)
 
 					world = World(filename=f, aiType=aiType, verbose=verbose, debug=debug)
+					#print("Test file " + filename)
 
 					score = world.run()
 					if score == 1:
