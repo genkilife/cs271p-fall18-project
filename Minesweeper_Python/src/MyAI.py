@@ -291,6 +291,9 @@ class MyAI(AI):
                 
         return polynomialEquation     
 
+    def gaussianElimination(self, poly=None):
+        pass
+
     def trySolverGaussaion(self):
         ruleLists = list()
         
@@ -300,7 +303,7 @@ class MyAI(AI):
                 if self.tileInfo[self.rowTotal-1-j][i] >= 0 and self.countFlaggedTiles(self.tileInfo, i, j) != self.tileInfo[self.rowTotal-1-j][i]:
                     # This current tile has arounding covered tiles.
                     # We can generate one polynomial based on this information
-                    rule = self.createPolynimialRule(self, i, j)
+                    rule = self.createPolynimialRule(i, j)
                     ruleLists.append(rule)
         
                     
@@ -308,7 +311,7 @@ class MyAI(AI):
         ruleLists.sort()
         
         # Gaussian elimination
-        
+        self.gaussianEliminate(ruleLists)
         # Push unary variables into known mine / non-mine queue
 
         return
