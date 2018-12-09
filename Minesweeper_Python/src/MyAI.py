@@ -64,7 +64,13 @@ class PolynomialEqation():
         ret.terms.sort()
         
         return ret
-        
+    
+    def __str__(self):
+        ret = ""
+        for term in self.terms:
+            ret = ret + str(term)
+        ret = ret + " = " + str(self.numOfBomb)
+        return ret
 
 # todo: solve the scenario when we couldn't make sure any tiles which are mines or empty
 
