@@ -354,12 +354,13 @@ class MyAI(AI):
                                 del polys[idxInner]
                                 idxInner = idxInner-1
                             else:
-                                polys[idxInner].sort()
+                                polys[idxInner].terms.sort()
                         idxInner = idxInner + 1
                     idxOuter = idxOuter + 1
                 polys.sort()
-            except:
-                pass
+            except Exception as e:
+                if e is not IndexError:
+                    print(e)
             
         return
         
