@@ -234,10 +234,12 @@ class MyAI(AI):
         qx, qy = borderTile[k]
 
         # recurse two possibilities: mine and no mine
+        assert(self.knownMine[self.rowTotal-1-qy][qx] == -1)
         self.knownMine[self.rowTotal-1-qy][qx] = -2
         self.tryRecursive(borderTile, k+1)
         self.knownMine[self.rowTotal-1-qy][qx] = -1
 
+        assert(self.knownEmpty[self.rowTotal-1-qy][qx] == -1)
         self.knownEmpty[self.rowTotal-1-qy][qx] = 0
         self.tryRecursive(borderTile, k+1)
         self.knownEmpty[self.rowTotal-1-qy][qx] = -1
