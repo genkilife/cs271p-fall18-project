@@ -218,8 +218,8 @@ class MyAI(AI):
                 if self._isBorder(i, j):
                     borderEmptyTiles.append((i, j))
 
-        # if len(borderEmptyTiles) > 40:
-        #     return
+        if len(borderEmptyTiles) > 18:
+            return
 
         self.borderTiles.clear()
         for i in range(self.colTotal):
@@ -228,12 +228,7 @@ class MyAI(AI):
                     self.borderTiles.append((i, j))
 
         segregated = []
-        partition = len(borderEmptyTiles)//self.magicNum
-        for i in range(partition):
-            segregated.append(borderEmptyTiles[i*self.magicNum:(i+1)*self.magicNum])
-
-        # print(segregated)
-        # print(self.borderTiles)
+        segregated.append(borderEmptyTiles)
 
         # complex part
         for i in range(len(segregated)):
@@ -246,8 +241,7 @@ class MyAI(AI):
                 return
 
             # check for solved tiles
-            # for j in range(len(segregated[i])):
-            for j in range(4, self.magicNum - 4):
+            for j in range(len(segregated[i])):
                 allMine, allEmpty = True, True
                 for sln in self.trySolutions:
                     if sln[j] is False:
@@ -269,7 +263,7 @@ class MyAI(AI):
     def tryRecursive(self, borderTile, k):
         # possible combination found
         if k == len(borderTile):
-            for i, j in self.borderTiles[4:self.magicNum-4]:
+            for i, j in self.borderTiles:
                 num = self.tileInfo[self.rowTotal - 1 - j][i]
                 numFlags = self.countFlaggedTiles(self.knownMine, i, j)
                 if num >= 0 and numFlags != num:
@@ -287,22 +281,10 @@ class MyAI(AI):
         # recurse two possibilities: mine and no mine
         assert(self.knownMine[self.rowTotal-1-qy][qx] == -1)
         self.knownMine[self.rowTotal-1-qy][qx] = -2
-        if self.solutionCheck(borderTile, qx, qy) is True:
-            self.tryRecursive(borderTile, k+1)
-        else:
-            return
+        self.tryRecursive(borderTile, k+1)
         self.knownMine[self.rowTotal-1-qy][qx] = -1
         self.tryRecursive(borderTile, k+1)
 
-    def solutionCheck(self, borderTile, x, y):
-        for ni, nj in self.dirs:
-            if (x+ni, y+nj) in borderTile:
-                num = self.tileInfo[self.rowTotal - 1 - (y+nj)][x+ni]
-                numFlags = self.countFlaggedTiles(self.knownMine, x+ni, y+nj)
-                if numFlags > num >= 0:
-                    return False
-        return True
-    
     def createPolynimialRule(self, col, row):
         assert(self.tileInfo[self.rowTotal-1-row][col] != -1)
         polynomialEquation = PolynomialEqation(self.tileInfo[self.rowTotal-1-row][col], [])
@@ -428,13 +410,15 @@ class MyAI(AI):
                 self.uncoveredNum += 1
                 return Action(self.nextAction, self.colX, self.rowY)
 
-            if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
+            if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue \
+                    and self.colTotal != 8 and self.rowTotal != 8:
                 self.trySolverGaussaion()
                 pass
                 
             # print("test")
-            #if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue:
-            #    self.trySolver()
+            if flagSuccess is False and moveSuccess is False and not self.knownMineQueue and not self.knownEmptyQueue \
+                    and self.colTotal == 8 and self.rowTotal == 8:
+                self.trySolver()
                 # print("Known Mine: ", self.knownMineQueue)
                 # print("Known Empty: ", self.knownEmptyQueue)
 
